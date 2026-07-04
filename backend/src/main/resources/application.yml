@@ -1,0 +1,50 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: ai-placement-mentor
+
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/ai_placement_mentor}
+      auto-index-creation: false
+
+  servlet:
+    multipart:
+      enabled: true 
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:default-secret-key-change-in-production-minimum-32-chars}
+    expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in ms
+
+  gemini:
+    api-key: ${GROQ_API_KEY:}
+    base-url: https://api.groq.com/openai/v1/chat/completions
+    model: llama-3.3-70b-versatile
+    max-retries: 3
+    timeout: 30
+
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
+
+logging:
+  level:
+    com.aimentor: DEBUG
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  packages-to-scan: com.aimentor.controller
+  show-actuator: false
