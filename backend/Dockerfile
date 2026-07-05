@@ -7,13 +7,10 @@ COPY src ./src
 RUN mvn clean package -DskipTests -q
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
-
-COPY --from=build /app/target/ai-placement-mentor-*.jar app.jar
+COPY --from=build /app/target/ai-placement-mentor-1.0.0.jar app.jar
 
 EXPOSE 8080
 
