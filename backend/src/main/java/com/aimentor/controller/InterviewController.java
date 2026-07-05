@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/interview")
+@RequestMapping("/api/interview")
 @RequiredArgsConstructor
 @Tag(name = "Interview", description = "Question generation and mock interview evaluation")
 @SecurityRequirement(name = "bearerAuth")

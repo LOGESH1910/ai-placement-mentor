@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/roadmap")
+@RequestMapping("/api/roadmap")
 @RequiredArgsConstructor
 @Tag(name = "Learning Roadmap", description = "Personalized 3-month placement preparation roadmap")
 @SecurityRequirement(name = "bearerAuth")
