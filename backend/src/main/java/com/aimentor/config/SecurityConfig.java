@@ -34,6 +34,7 @@ public class SecurityConfig {
     /** Public endpoints that don't need a JWT */
     private static final String[] PUBLIC_ENDPOINTS = {
         "/auth/**",
+        "/health",
         "/v3/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html",
