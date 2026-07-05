@@ -122,7 +122,8 @@ export default function ResumeAnalysisPage() {
       const formData = new FormData()
       formData.append('file', file)
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:8080/api/profile/resume', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+      const res = await fetch(`${apiBase}/profile/resume`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData,
       })
       const data = await res.json()
