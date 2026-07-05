@@ -31,7 +31,7 @@ app:
     timeout: 30
 
   cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,https://ai-placement-mentor-seven.vercel.app}
 
 logging:
   level:
