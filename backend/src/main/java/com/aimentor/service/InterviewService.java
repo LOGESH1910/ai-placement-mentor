@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +71,31 @@ public class InterviewService {
         return sessionRepository
                 .findByUserIdAndSessionTypeOrderByCreatedAtDesc(user.getId(), "MOCK")
                 .stream().map(this::toDTO).toList();
+    }
+
+    // ── Communication Practice Chat ───────────────────────────────────────────
+
+    public String chat(java.util.List<java.util.Map<String, String>> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return "Hello! I'm ready to help you practice. Let's begin.";
+        }
+        try {
+            // Pass messages directly to the chat-specific Groq call (no JSON-only constraint)
+            List<Map<String, String>> groqMessages = new ArrayList<>();
+            for (java.util.Map<String, String> msg : messages) {
+                String role = msg.getOrDefault("role", "user");
+                String content = msg.getOrDefault("content", "");
+                // Only pass system, user, assistant roles
+                if ("system".equals(role) || "user".equals(role) || "assistant".equals(role)) {
+                    groqMessages.add(Map.of("role", role, "content", content));
+                }
+            }
+            return geminiService.generateChat(groqMessages);
+        } catch (Exception e) {
+            log.warn("Chat AI call failed, using fallback: {}", e.getMessage());
+            return "That's an interesting point! Could you elaborate a bit more? " +
+                   "I'd love to hear a specific example from your experience.";
+        }
     }
 
     // ── Parsers ───────────────────────────────────────────────────────────────

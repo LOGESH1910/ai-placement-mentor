@@ -42,5 +42,16 @@ public class Roadmap {
         private List<String> goals;
         private List<String> topics;
         private List<String> projects;
+        private List<DayTask> dailyPlan;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class DayTask {
+        private int day;
+        private String task;
+        private String duration;
     }
 }

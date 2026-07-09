@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { analyzeResume, getResumeHistory } from '../services/resumeService'
+import { uploadResume } from '../services/profileService'
 import TagInput from '../components/ui/TagInput'
 import Loader from '../components/ui/Loader'
 import ErrorAlert from '../components/ui/ErrorAlert'
@@ -119,14 +120,7 @@ export default function ResumeAnalysisPage() {
     setUploadStatus('uploading')
     setError('')
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:8080/api/profile/resume', {
-        method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData,
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || 'Upload failed')
+      await uploadResume(file)
       setUploadStatus('success')
       setResumeText('')
     } catch (err) {

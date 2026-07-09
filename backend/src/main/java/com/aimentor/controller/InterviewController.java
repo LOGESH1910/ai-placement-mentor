@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/interview")
@@ -60,5 +61,16 @@ public class InterviewController {
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.success(
                 interviewService.getMockHistory(userDetails.getUsername())));
+    }
+
+    @PostMapping("/chat")
+    @Operation(summary = "Communication practice chat — AI responds to a conversation")
+    public ResponseEntity<Map<String, String>> chat(
+            @RequestBody Map<String, Object> body) {
+        @SuppressWarnings("unchecked")
+        java.util.List<Map<String, String>> messages =
+                (java.util.List<Map<String, String>>) body.get("messages");
+        String reply = interviewService.chat(messages);
+        return ResponseEntity.ok(Map.of("reply", reply));
     }
 }

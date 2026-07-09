@@ -10,6 +10,8 @@ const NAV = [
   { path: '/interview/mock',      icon: '🎤', label: 'Mock Interview' },
   { path: '/coding',              icon: '💻', label: 'Coding Prep' },
   { path: '/roadmap',             icon: '🗺️', label: 'Roadmap' },
+  { path: '/aptitude',            icon: '🧮', label: 'Aptitude' },
+  { path: '/communication',       icon: '🗣️', label: 'Communication' },
 ]
 
 export default function Sidebar() {

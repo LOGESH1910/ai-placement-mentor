@@ -16,6 +16,8 @@ import InterviewQuestionsPage from './pages/InterviewQuestionsPage'
 import MockInterviewPage from './pages/MockInterviewPage'
 import CodingPage from './pages/CodingPage'
 import RoadmapPage from './pages/RoadmapPage'
+import AptitudePage from './pages/AptitudePage'
+import CommunicationPage from './pages/CommunicationPage'
 
 export default function App() {
   return (
@@ -38,6 +40,8 @@ export default function App() {
               <Route path="/interview/mock" element={<MockInterviewPage />} />
               <Route path="/coding" element={<CodingPage />} />
               <Route path="/roadmap" element={<RoadmapPage />} />
+              <Route path="/aptitude" element={<AptitudePage />} />
+              <Route path="/communication" element={<CommunicationPage />} />
             </Route>
           </Route>
 

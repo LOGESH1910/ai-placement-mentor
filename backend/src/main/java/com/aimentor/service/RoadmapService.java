@@ -79,11 +79,21 @@ public class RoadmapService {
 
     private Roadmap.MonthPlan parseMonth(JsonNode node) {
         if (node == null) return null;
+        List<Roadmap.DayTask> dailyPlan = new ArrayList<>();
+        JsonNode dpNode = node.get("dailyPlan");
+        if (dpNode != null && dpNode.isArray()) {
+            dpNode.forEach(d -> dailyPlan.add(Roadmap.DayTask.builder()
+                    .day(d.path("day").asInt())
+                    .task(d.path("task").asText())
+                    .duration(d.path("duration").asText())
+                    .build()));
+        }
         return Roadmap.MonthPlan.builder()
                 .theme(node.path("theme").asText())
                 .goals(toStringList(node.get("goals")))
                 .topics(toStringList(node.get("topics")))
                 .projects(toStringList(node.get("projects")))
+                .dailyPlan(dailyPlan)
                 .build();
     }
 
@@ -109,11 +119,20 @@ public class RoadmapService {
 
     private RoadmapDTO.MonthPlanDTO toMonthDTO(Roadmap.MonthPlan m) {
         if (m == null) return null;
+        List<RoadmapDTO.DayTaskDTO> dailyPlan = new ArrayList<>();
+        if (m.getDailyPlan() != null) {
+            m.getDailyPlan().forEach(d -> dailyPlan.add(RoadmapDTO.DayTaskDTO.builder()
+                    .day(d.getDay())
+                    .task(d.getTask())
+                    .duration(d.getDuration())
+                    .build()));
+        }
         return RoadmapDTO.MonthPlanDTO.builder()
                 .theme(m.getTheme())
                 .goals(m.getGoals())
                 .topics(m.getTopics())
                 .projects(m.getProjects())
+                .dailyPlan(dailyPlan)
                 .build();
     }
 }

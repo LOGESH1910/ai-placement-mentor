@@ -7,6 +7,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +23,20 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of(allowedOrigins.split(",")));
+
+        // Always allow all localhost origins regardless of env config
+        List<String> origins = new ArrayList<>(
+                java.util.Arrays.asList(allowedOrigins.split(","))
+        );
+        origins.add("http://localhost:5173");
+        origins.add("http://localhost:3000");
+        origins.add("http://localhost");
+        origins.add("http://127.0.0.1:5173");
+        origins.add("http://127.0.0.1:3000");
+        origins.add("http://127.0.0.1");
+
+        config.setAllowedOriginPatterns(origins.stream()
+                .map(String::trim).distinct().toList());
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setExposedHeaders(List.of("Authorization"));

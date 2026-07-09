@@ -32,5 +32,16 @@ public class RoadmapDTO {
         private List<String> goals;
         private List<String> topics;
         private List<String> projects;
+        private List<DayTaskDTO> dailyPlan;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DayTaskDTO {
+        private int day;
+        private String task;
+        private String duration;
     }
 }

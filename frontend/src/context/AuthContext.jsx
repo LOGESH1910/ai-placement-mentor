@@ -4,11 +4,11 @@ import api from '../services/api'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(() => localStorage.getItem('token'))
+  const [user, setUser]     = useState(null)
+  const [token, setToken]   = useState(() => localStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
 
-  // Sync axios default header whenever token changes
+  // ── Keep axios header in sync with token ─────────────────────────────────
   useEffect(() => {
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -19,23 +19,29 @@ export function AuthProvider({ children }) {
     }
   }, [token])
 
-  // On first mount: if we have a stored token, fetch the profile
+  // ── On mount: restore session from localStorage ───────────────────────────
   useEffect(() => {
     const stored = localStorage.getItem('token')
-    if (stored) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${stored}`
-      api.get('/profile')
-        .then(res => setUser(res.data.data))
-        .catch(() => {
-          localStorage.removeItem('token')
-          setToken(null)
-        })
-        .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
-    }
-  }, [])
+    if (!stored) { setLoading(false); return }
 
+    // Token exists — set header immediately so the profile fetch is authenticated
+    api.defaults.headers.common['Authorization'] = `Bearer ${stored}`
+
+    api.get('/profile')
+      .then(res => {
+        setUser(res.data.data)
+        setToken(stored)
+      })
+      .catch(() => {
+        // Token invalid or expired — clear it
+        localStorage.removeItem('token')
+        delete api.defaults.headers.common['Authorization']
+        setToken(null)
+      })
+      .finally(() => setLoading(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auth actions ──────────────────────────────────────────────────────────
   const login = useCallback(async (email, password) => {
     const res = await api.post('/auth/login', { email, password })
     const { token: jwt, user: userData } = res.data.data
