@@ -1,7 +1,6 @@
 server:
-  port: 8080
-  servlet:
-    context-path: /api
+  port: ${PORT:8080}
+  address: 0.0.0.0
 
 spring:
   application:
@@ -31,7 +30,7 @@ app:
     timeout: 30
 
   cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,https://ai-placement-mentor-seven.vercel.app}
 
 logging:
   level:
@@ -42,9 +41,9 @@ logging:
 
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    path: /api/v3/api-docs
   swagger-ui:
-    path: /swagger-ui.html
+    path: /api/swagger-ui.html
     operationsSorter: method
   packages-to-scan: com.aimentor.controller
   show-actuator: false

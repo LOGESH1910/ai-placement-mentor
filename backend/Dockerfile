@@ -9,6 +9,7 @@ RUN mvn clean package -DskipTests -q
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+COPY --from=build /app/target/ai-placement-mentor-1.0.0.jar app.jar
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser

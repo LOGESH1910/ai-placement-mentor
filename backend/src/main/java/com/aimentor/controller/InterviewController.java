@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/interview")
+@RequestMapping("/api/interview")
 @RequiredArgsConstructor
 @Tag(name = "Interview", description = "Question generation and mock interview evaluation")
 @SecurityRequirement(name = "bearerAuth")

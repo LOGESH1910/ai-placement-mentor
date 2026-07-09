@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/coding")
+@RequestMapping("/api/coding")
 @RequiredArgsConstructor
 @Tag(name = "Coding Recommendations", description = "DSA problem recommendations and practice plans")
 @SecurityRequirement(name = "bearerAuth")

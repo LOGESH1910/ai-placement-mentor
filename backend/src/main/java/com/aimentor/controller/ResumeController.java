@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/resume")
+@RequestMapping("/api/resume")
 @RequiredArgsConstructor
 @Tag(name = "Resume Analysis", description = "AI-powered resume and skill analysis")
 @SecurityRequirement(name = "bearerAuth")
