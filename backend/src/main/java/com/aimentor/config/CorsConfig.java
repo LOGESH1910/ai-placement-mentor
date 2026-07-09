@@ -24,16 +24,19 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
 
-        // Always allow all localhost origins regardless of env config
+        // Build origins list from env config + hardcoded dev + all vercel subdomains
         List<String> origins = new ArrayList<>(
                 java.util.Arrays.asList(allowedOrigins.split(","))
         );
+        // Local dev
         origins.add("http://localhost:5173");
         origins.add("http://localhost:3000");
         origins.add("http://localhost");
         origins.add("http://127.0.0.1:5173");
         origins.add("http://127.0.0.1:3000");
         origins.add("http://127.0.0.1");
+        // All Vercel preview + production deployments
+        origins.add("https://*.vercel.app");
 
         config.setAllowedOriginPatterns(origins.stream()
                 .map(String::trim).distinct().toList());
