@@ -26,7 +26,7 @@ api.interceptors.response.use(
     if (!err.response) {
       const msg = err.code === 'ECONNABORTED'
         ? 'Request timed out. The AI is taking too long — please try again.'
-        : 'Cannot reach the server. Make sure the backend is running on port 8080.'
+        : 'Cannot reach the server. The backend may be starting up (cold start) — please wait 30 seconds and try again.'
       return Promise.reject(new Error(msg))
     }
 
