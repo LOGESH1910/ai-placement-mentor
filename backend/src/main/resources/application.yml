@@ -3,6 +3,10 @@ server:
   address: 0.0.0.0
 
 spring:
+  config:
+    # Load local development secrets such as MONGODB_URI without committing them.
+    import: optional:file:.env[.properties]
+
   application:
     name: ai-placement-mentor
 
@@ -23,7 +27,7 @@ app:
     expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in ms
 
   gemini:
-    api-key: ${GROQ_API_KEY:}
+    api-key: ${GROQ_API_KEY:${GEMINI_API_KEY:}}
     base-url: https://api.groq.com/openai/v1/chat/completions
     model: llama-3.3-70b-versatile
     max-retries: 3
