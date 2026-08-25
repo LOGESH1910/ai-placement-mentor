@@ -9,7 +9,7 @@ const DIFF_BADGE  = { EASY: 'badge-green', MEDIUM: 'badge-yellow', HARD: 'badge-
 
 function QuestionCard({ q, index }) {
   const [open, setOpen] = useState(false)
-  const color = DIFF_COLORS[q.difficulty] ?? '#00d4ff'
+  const color = DIFF_COLORS[q.difficulty] ?? 'var(--info)'
   return (
     <div className="card" style={{ padding: '1.1rem 1.25rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
@@ -121,7 +121,7 @@ export default function InterviewQuestionsPage() {
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: '#e2f0ff' }}>Generate Questions</span>
+              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Generate Questions</span>
             </div>
 
             <ErrorAlert message={error} onDismiss={() => setError('')} />
