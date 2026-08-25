@@ -4,19 +4,22 @@ import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 
-// Auth pages
+// Public pages
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
 
 // App pages
 import DashboardPage from './pages/DashboardPage'
+import LearnPage from './pages/LearnPage'
+import LearnTopicPage from './pages/LearnTopicPage'
+import PracticePage from './pages/PracticePage'
+import AIMentorPage from './pages/AIMentorPage'
+import InterviewPage from './pages/InterviewPage'
+import ProgressPage from './pages/ProgressPage'
 import ProfilePage from './pages/ProfilePage'
 import ResumeAnalysisPage from './pages/ResumeAnalysisPage'
-import InterviewQuestionsPage from './pages/InterviewQuestionsPage'
-import MockInterviewPage from './pages/MockInterviewPage'
-import CodingPage from './pages/CodingPage'
 import RoadmapPage from './pages/RoadmapPage'
-import AptitudePage from './pages/AptitudePage'
 import CommunicationPage from './pages/CommunicationPage'
 
 export default function App() {
@@ -24,30 +27,32 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected routes — wrapped in sidebar layout */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/resume" element={<ResumeAnalysisPage />} />
-              <Route path="/interview/questions" element={<InterviewQuestionsPage />} />
-              <Route path="/interview/mock" element={<MockInterviewPage />} />
-              <Route path="/coding" element={<CodingPage />} />
-              <Route path="/roadmap" element={<RoadmapPage />} />
-              <Route path="/aptitude" element={<AptitudePage />} />
-              <Route path="/communication" element={<CommunicationPage />} />
+            {/* Protected application */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/learn" element={<LearnPage />} />
+                <Route path="/learn/:topicId" element={<LearnTopicPage />} />
+                <Route path="/practice" element={<PracticePage />} />
+                <Route path="/ai-mentor" element={<AIMentorPage />} />
+                <Route path="/interview" element={<InterviewPage />} />
+                <Route path="/progress" element={<ProgressPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/resume" element={<ResumeAnalysisPage />} />
+                <Route path="/roadmap" element={<RoadmapPage />} />
+                <Route path="/communication" element={<CommunicationPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+            {/* Catch-all → landing */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
