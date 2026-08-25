@@ -1,124 +1,192 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import ErrorAlert from '../../components/ui/ErrorAlert'
+import { BrandMark } from '../../components/ui/BrandMark'
+import { AuthIntro } from './LoginPage'
+
+function passwordStrength(pwd) {
+  if (!pwd) return 0
+  let score = 0
+  if (pwd.length >= 6) score += 1
+  if (pwd.length >= 10 && /[A-Z]/.test(pwd)) score += 1
+  if (/[^A-Za-z0-9]/.test(pwd) || /\d/.test(pwd)) score += 1
+  return Math.min(score, 3)
+}
+
+const STRENGTH_LABEL = ['', 'Weak password', 'Decent password', 'Strong password']
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', college: '', department: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const { register } = useAuth()
+  const { user, loading, register } = useAuth()
   const navigate = useNavigate()
 
-  const handle = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', college: '' })
+  const [showPwd, setShowPwd] = useState(false)
+  const [agree, setAgree] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  const strength = useMemo(() => passwordStrength(form.password), [form.password])
+
+  if (!loading && user) return <Navigate to="/dashboard" replace />
+
+  const validate = () => {
+    const errs = {}
+    if (!form.name.trim()) errs.name = 'Full name is required'
+    else if (form.name.trim().length < 2) errs.name = 'Enter your full name'
+    if (!form.email.trim()) errs.email = 'Email is required'
+    else if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = 'Enter a valid email address'
+    if (!form.password) errs.password = 'Password is required'
+    else if (form.password.length < 6) errs.password = 'Use at least 6 characters'
+    if (form.confirm !== form.password) errs.confirm = 'Passwords do not match'
+    if (!agree) errs.agree = 'Please accept the Terms to continue'
+    setFieldErrors(errs)
+    return Object.keys(errs).length === 0
+  }
 
   const submit = async (e) => {
     e.preventDefault()
     setError('')
-    if (form.password.length < 6) { setError('Password must be at least 6 characters'); return }
-    setLoading(true)
+    if (!validate()) return
+    setSubmitting(true)
     try {
-      await register(form)
+      await register({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        college: form.college.trim(),
+      })
       navigate('/dashboard')
     } catch (err) {
       setError(err.message)
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
+  const set = (k) => (e) => {
+    setForm((f) => ({ ...f, [k]: e.target.value }))
+    if (fieldErrors[k]) setFieldErrors((fe) => ({ ...fe, [k]: undefined }))
+  }
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: 'linear-gradient(135deg, #050810 0%, #0a0f1e 100%)' }}>
-      {/* Left — Form */}
-      <div style={{
-        width: '100%', maxWidth: 520,
-        display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        padding: '2.5rem 3.5rem',
-        background: 'rgba(10,15,30,0.95)',
-        borderRight: '1px solid rgba(0,212,255,0.1)',
-      }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #00d4ff, #0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', boxShadow: '0 0 20px rgba(0,212,255,0.4)' }}>🎯</div>
-            <div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>AI Powered</div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#e2f0ff', lineHeight: 1 }}>Placement Mentor</div>
-            </div>
-          </div>
-        </div>
+    <div className="auth-layout anim-fade-in">
+      <AuthIntro
+        eyebrow="YOUR PLACEMENT WORKSPACE"
+        title={<>A clearer path<br />to your next role.</>}
+        tagline="Create your plan, practise with intent and see exactly where to focus next."
+      />
 
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#e2f0ff', marginBottom: '0.3rem' }}>Create Account</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Start your placement journey today — it's free</p>
-
-        <ErrorAlert message={error} onDismiss={() => setError('')} />
-
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <div className="form-group">
-              <label className="form-label">Full Name *</label>
-              <input name="name" required className="form-input" placeholder="Logesh M" value={form.name} onChange={handle} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Email *</label>
-              <input name="email" type="email" required className="form-input" placeholder="you@college.edu" value={form.email} onChange={handle} />
-            </div>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Password *</label>
-            <input name="password" type="password" required className="form-input" placeholder="At least 6 characters" value={form.password} onChange={handle} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <div className="form-group">
-              <label className="form-label">College</label>
-              <input name="college" className="form-input" placeholder="Anna University" value={form.college} onChange={handle} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Department</label>
-              <input name="department" className="form-input" placeholder="IT / CSE" value={form.department} onChange={handle} />
-            </div>
+      <main className="auth-panel">
+        <div className="auth-form-wrap">
+          <div className="auth-mobile-brand">
+            <BrandMark size={28} /> AI Placement Mentor
           </div>
 
-          <button type="submit" disabled={loading} style={{
-            width: '100%', padding: '0.85rem', borderRadius: 8,
-            background: 'linear-gradient(135deg, #00d4ff, #0ea5e9)',
-            color: '#050810', fontWeight: 700, fontSize: '1rem',
-            border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1, boxShadow: '0 0 24px rgba(0,212,255,0.3)',
-            marginTop: '0.25rem',
-          }}>
-            {loading ? '⏳ Creating account…' : 'Create Account →'}
-          </button>
-        </form>
-
-        <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>Sign in</Link>
-        </p>
-      </div>
-
-      {/* Right — Hero */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #050c18 0%, #071422 50%, #050810 100%)' }}>
-        <div style={{ position: 'absolute', top: '20%', left: '30%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 440 }}>
-          <div style={{ width: 180, height: 180, margin: '0 auto 2rem', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(0,212,255,0.12), rgba(14,165,233,0.08))', border: '2px solid rgba(0,212,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 60px rgba(0,212,255,0.15)', fontSize: '5rem' }}>
-            🚀
-          </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.2, marginBottom: '1rem', background: 'linear-gradient(135deg, #e2f0ff 0%, #00d4ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            Land Your Dream Job<br />With AI Guidance
-          </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-            Join thousands of students who cracked placements at top companies using our AI mentor.
+          <h2>Create your account</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 4 }}>
+            Free forever. Set up in under a minute.
           </p>
-          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
-            {[['🏢', 'Google, Amazon, TCS'], ['📈', 'Track Progress'], ['🤖', 'AI Feedback']].map(([ic, label]) => (
-              <div key={label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.5rem' }}>{ic}</div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>{label}</div>
+
+          <ErrorAlert message={error} onDismiss={() => setError('')} />
+
+          <form onSubmit={submit} className="auth-form" noValidate>
+            <div className="form-group">
+              <label className="form-label" htmlFor="reg-name">Full name</label>
+              <input
+                id="reg-name" name="name" autoComplete="name" placeholder="Your full name"
+                className={`form-input${fieldErrors.name ? ' invalid' : ''}`}
+                value={form.name} onChange={set('name')} aria-invalid={Boolean(fieldErrors.name)}
+              />
+              {fieldErrors.name && <span className="form-error-text">{fieldErrors.name}</span>}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="reg-email">Email address</label>
+              <input
+                id="reg-email" name="email" type="email" autoComplete="email" placeholder="you@example.com"
+                className={`form-input${fieldErrors.email ? ' invalid' : ''}`}
+                value={form.email} onChange={set('email')} aria-invalid={Boolean(fieldErrors.email)}
+              />
+              {fieldErrors.email && <span className="form-error-text">{fieldErrors.email}</span>}
+            </div>
+
+            <div className="grid grid-2" style={{ gap: '0.85rem' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-password">Password</label>
+                <div className="pwd-field">
+                  <input
+                    id="reg-password" name="password"
+                    type={showPwd ? 'text' : 'password'}
+                    autoComplete="new-password" placeholder="Min. 6 characters"
+                    className={`form-input${fieldErrors.password ? ' invalid' : ''}`}
+                    value={form.password} onChange={set('password')}
+                    aria-invalid={Boolean(fieldErrors.password)}
+                  />
+                  <button type="button" className="pwd-toggle" onClick={() => setShowPwd((v) => !v)} aria-label={showPwd ? 'Hide password' : 'Show password'}>
+                    {showPwd ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="reg-confirm">Confirm password</label>
+                <input
+                  id="reg-confirm" name="confirm" type={showPwd ? 'text' : 'password'}
+                  autoComplete="new-password" placeholder="Repeat password"
+                  className={`form-input${fieldErrors.confirm ? ' invalid' : ''}`}
+                  value={form.confirm} onChange={set('confirm')}
+                  aria-invalid={Boolean(fieldErrors.confirm)}
+                />
+              </div>
+            </div>
+
+            {/* Strength indicator */}
+            {form.password && (
+              <div aria-live="polite">
+                <div className="strength-track">
+                  {[1, 2, 3].map((i) => (
+                    <span key={i} className={`strength-seg${strength >= i ? ` on-${strength}` : ''}`} />
+                  ))}
+                </div>
+                <span className="caption" style={{ marginTop: 4, display: 'block', color: strength === 3 ? 'var(--success)' : strength === 2 ? 'var(--warning)' : 'var(--danger)' }}>
+                  {STRENGTH_LABEL[strength]}
+                </span>
+              </div>
+            )}
+            {(fieldErrors.password || fieldErrors.confirm) && (
+              <span className="form-error-text">{fieldErrors.password ?? fieldErrors.confirm}</span>
+            )}
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="reg-college">
+                College <span style={{ fontWeight: 400, color: 'var(--text-dim)' }}>(optional)</span>
+              </label>
+              <input id="reg-college" name="college" placeholder="e.g. Anna University" value={form.college} onChange={set('college')} />
+            </div>
+
+            <div>
+              <label className="checkbox-row">
+                <input
+                  type="checkbox" checked={agree}
+                  onChange={(e) => { setAgree(e.target.checked); if (fieldErrors.agree) setFieldErrors((f) => ({ ...f, agree: undefined })) }}
+                />
+                I agree to the Terms of Service and Privacy Policy
+              </label>
+              {fieldErrors.agree && <span className="form-error-text" style={{ marginTop: 4 }}>{fieldErrors.agree}</span>}
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting || loading}>
+              {submitting ? (<><span className="spinner" /> Creating account…</>) : 'Create account'}
+            </button>
+          </form>
+
+          <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            Already have an account?{' '}
+            <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 700 }}>Sign in</Link>
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
