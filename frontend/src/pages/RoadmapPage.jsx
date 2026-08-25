@@ -193,7 +193,7 @@ export default function RoadmapPage() {
               <div className="form-group">
                 <label className="form-label">Current Skills (press Enter to add)</label>
                 <TagInput value={skills} onChange={setSkills} placeholder="Java, React, SQL…" />
-                <span className="text-xs text-muted">{skills.length} skills · or leave blank to use profile skills</span>
+                <span className="caption">{skills.length} skills · or leave blank to use profile skills</span>
               </div>
               <button type="submit" className="btn btn-primary" disabled={loading} style={{ alignSelf: 'flex-start' }}>
                 {loading ? <><span className="spinner" /> Generating…</> : '🗺️ Generate Roadmap'}
