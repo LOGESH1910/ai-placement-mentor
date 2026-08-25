@@ -185,7 +185,8 @@ function SectionView({ section, onBack }) {
     return arr
   })
 
-  const [answers, setAnswers] = useState({})
+  /* Per-question answers live inside QuizCard; this map stays for future sync */
+  const [answers] = useState({})
   const [filter,  setFilter]  = useState('all')
 
   const scored   = Object.keys(answers).length
