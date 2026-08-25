@@ -1,157 +1,175 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import ErrorAlert from '../../components/ui/ErrorAlert'
+import Icon from '../../components/ui/Icon'
+import { BrandMark } from '../../components/ui/BrandMark'
 
-// Tech/study images from Unsplash (free to use)
-const BG_IMAGES = [
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1484557052118-f32bd25b45b5?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1550439062-609e1531270e?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&q=60&fit=crop',
-  'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&q=60&fit=crop',
+const POINTS = [
+  ['AI mock interviews', 'Practise with instant, structured feedback on every answer.'],
+  ['Coding & aptitude practice', 'Focused problem sets that mirror real placement drives.'],
+  ['Personal learning plan', 'A clear roadmap from first lesson to final offer.'],
 ]
 
+export function AuthIntro({ eyebrow, title, tagline }) {
+  return (
+    <section className="auth-intro" aria-hidden="true">
+      <Link to="/" className="auth-intro-brand">
+        <BrandMark size={30} /> AI Placement Mentor
+      </Link>
+      <div className="auth-intro-copy">
+        <p className="label" style={{ color: '#a5b4fc', marginBottom: 12 }}>{eyebrow}</p>
+        <h1>{title}</h1>
+        <p className="auth-tagline">{tagline}</p>
+        <ul className="auth-points">
+          {POINTS.map(([b, s]) => (
+            <li key={b}>
+              <span className="auth-point-check">
+                <Icon name="check" size={12} strokeWidth={3} />
+              </span>
+              <div>
+                <b>{b}</b>
+                <span>{s}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p style={{ fontSize: '0.78rem', color: '#818cf8' }}>
+        A structured workspace for every stage of your job search.
+      </p>
+    </section>
+  )
+}
+
 export default function LoginPage() {
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [showPwd, setShowPwd] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const { login } = useAuth()
+  const { user, loading, login } = useAuth()
   const navigate = useNavigate()
 
-  const handle = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [showPwd, setShowPwd] = useState(false)
+  const [remember, setRemember] = useState(true)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  /* Already signed in → straight to the app */
+  if (!loading && user) return <Navigate to="/dashboard" replace />
+
+  const validate = () => {
+    const errs = {}
+    if (!form.email.trim()) errs.email = 'Email is required'
+    else if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = 'Enter a valid email address'
+    if (!form.password) errs.password = 'Password is required'
+    setFieldErrors(errs)
+    return Object.keys(errs).length === 0
+  }
 
   const submit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
+    if (!validate()) return
+    setSubmitting(true)
     try {
-      await login(form.email, form.password)
+      await login(form.email.trim(), form.password)
       navigate('/dashboard')
     } catch (err) {
       setError(err.message)
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
+  const set = (k) => (e) => {
+    setForm((f) => ({ ...f, [k]: e.target.value }))
+    if (fieldErrors[k]) setFieldErrors((fe) => ({ ...fe, [k]: undefined }))
+  }
+
   return (
-    <div style={{
-      minHeight: '100vh', position: 'relative',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Inter, sans-serif', overflow: 'hidden',
-    }}>
-      {/* Background image grid */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-        gridTemplateRows: 'repeat(3, 1fr)',
-        zIndex: 0,
-      }}>
-        {BG_IMAGES.map((src, i) => (
-          <div key={i} style={{
-            backgroundImage: `url(${src})`,
-            backgroundSize: 'cover', backgroundPosition: 'center',
-          }} />
-        ))}
-      </div>
+    <div className="auth-layout anim-fade-in">
+      <AuthIntro
+        eyebrow="WELCOME BACK"
+        title={<>Prepare smarter.<br />Get placement ready.</>}
+        tagline="Sign in to continue your preparation and keep your progress on track."
+      />
 
-      {/* Dark overlay */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.68)', zIndex: 1 }} />
-
-      {/* Centered form card */}
-      <div style={{
-        position: 'relative', zIndex: 2,
-        width: '100%', maxWidth: 420,
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        padding: '2rem 1rem',
-      }}>
-        {/* Logo circle */}
-        <div style={{
-          width: 60, height: 60, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.1)',
-          border: '2px solid rgba(255,255,255,0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.75rem', marginBottom: '1.5rem',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 0 30px rgba(0,212,255,0.3)',
-        }}>🎯</div>
-
-        <h1 style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.25rem', textAlign: 'center', letterSpacing: '0.02em' }}>
-          AI Placement Mentor
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', marginBottom: '2rem' }}>Sign in to your account</p>
-
-        <ErrorAlert message={error} onDismiss={() => setError('')} />
-
-        {/* Form inputs */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1rem' }}>
-          {/* Email */}
-          <div style={{
-            background: 'rgba(255,255,255,0.92)', borderRadius: 8,
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
-            padding: '0 1rem',
-          }}>
-            <span style={{ color: '#6b7280', fontSize: '1rem' }}>✉</span>
-            <input name="email" type="email" required placeholder="Email Address"
-              value={form.email} onChange={handle}
-              style={{ flex: 1, padding: '0.85rem 0', background: 'transparent', border: 'none', outline: 'none', color: '#1f2937', fontSize: '0.95rem' }} />
+      <main className="auth-panel">
+        <div className="auth-form-wrap">
+          <div className="auth-mobile-brand">
+            <BrandMark size={28} /> AI Placement Mentor
           </div>
 
-          {/* Password */}
-          <div style={{
-            background: 'rgba(255,255,255,0.92)', borderRadius: 8,
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
-            padding: '0 1rem',
-          }}>
-            <span style={{ color: '#6b7280', fontSize: '1rem' }}>🔒</span>
-            <input name="password" type={showPwd ? 'text' : 'password'} required placeholder="Password"
-              value={form.password} onChange={handle}
-              style={{ flex: 1, padding: '0.85rem 0', background: 'transparent', border: 'none', outline: 'none', color: '#1f2937', fontSize: '0.95rem' }} />
-            <button type="button" onClick={() => setShowPwd(v => !v)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: '0.9rem' }}>
-              {showPwd ? '🙈' : '👁'}
+          <h2>Sign in</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: 4 }}>
+            Continue where you left off.
+          </p>
+
+          <ErrorAlert message={error} onDismiss={() => setError('')} />
+
+          <form onSubmit={submit} className="auth-form" noValidate>
+            <div className="form-group">
+              <label className="form-label" htmlFor="login-email">Email address</label>
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                className={`form-input${fieldErrors.email ? ' invalid' : ''}`}
+                value={form.email}
+                onChange={set('email')}
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+              {fieldErrors.email && <span className="form-error-text">{fieldErrors.email}</span>}
+            </div>
+
+            <div className="form-group">
+              <div className="spread">
+                <label className="form-label" htmlFor="login-password">Password</label>
+                <button type="button" className="text-button" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }} onClick={() => alert('Password reset links are sent by your placement coordinator. Please contact them to reset your password.')}>
+                  Forgot password?
+                </button>
+              </div>
+              <div className="pwd-field">
+                <input
+                  id="login-password"
+                  name="password"
+                  type={showPwd ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  className={`form-input${fieldErrors.password ? ' invalid' : ''}`}
+                  value={form.password}
+                  onChange={set('password')}
+                  aria-invalid={Boolean(fieldErrors.password)}
+                />
+                <button
+                  type="button"
+                  className="pwd-toggle"
+                  onClick={() => setShowPwd((v) => !v)}
+                  aria-label={showPwd ? 'Hide password' : 'Show password'}
+                >
+                  {showPwd ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              {fieldErrors.password && <span className="form-error-text">{fieldErrors.password}</span>}
+            </div>
+
+            <label className="checkbox-row">
+              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+              Remember me on this device
+            </label>
+
+            <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting || loading}>
+              {submitting ? (<><span className="spinner" /> Signing in…</>) : 'Sign in'}
             </button>
-          </div>
+          </form>
+
+          <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            New to AI Placement Mentor?{' '}
+            <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 700 }}>Create an account</Link>
+          </p>
         </div>
-
-        {/* Keep me logged in */}
-        <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          <input type="checkbox" id="keep" style={{ accentColor: '#00d4ff' }} />
-          <label htmlFor="keep" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', cursor: 'pointer' }}>Keep Me Logged In</label>
-        </div>
-
-        {/* Login button */}
-        <button type="button" onClick={submit} disabled={loading} style={{
-          width: '100%', padding: '0.9rem',
-          background: loading ? '#0284c7' : 'linear-gradient(135deg, #00d4ff, #0ea5e9)',
-          color: '#fff', fontWeight: 700, fontSize: '1rem',
-          border: 'none', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer',
-          letterSpacing: '0.1em', textTransform: 'uppercase',
-          boxShadow: '0 4px 20px rgba(0,212,255,0.4)',
-          transition: 'all 0.2s', marginBottom: '1.25rem',
-        }}>
-          {loading ? 'Logging in…' : 'LOG IN'}
-        </button>
-
-        {/* Forgot / Register */}
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', cursor: 'pointer' }}>FORGOT PASSWORD?</span>
-          <Link to="/register" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', textDecoration: 'none', letterSpacing: '0.05em' }}>
-            NEW USER? REGISTER
-          </Link>
-        </div>
-
-        {/* Footer */}
-        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72rem', textAlign: 'center' }}>
-          © 2026 AI Placement Mentor. All rights reserved.
-        </p>
-      </div>
+      </main>
     </div>
   )
 }
