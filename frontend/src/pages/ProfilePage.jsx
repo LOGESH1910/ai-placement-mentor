@@ -1,17 +1,33 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { updateProfile, uploadResume } from '../services/profileService'
 import TagInput from '../components/ui/TagInput'
 import ErrorAlert from '../components/ui/ErrorAlert'
+import PageHeader from '../components/ui/PageHeader'
+import ScoreRing from '../components/ui/ScoreRing'
+import Icon from '../components/ui/Icon'
+
+const EXTRAS_KEY = 'apm_profile_extras'
+
+function loadExtras() {
+  try {
+    return JSON.parse(localStorage.getItem(EXTRAS_KEY) ?? '{}')
+  } catch {
+    return {}
+  }
+}
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth()
+  const fileRef = useRef(null)
+
   const [form, setForm] = useState({ name: '', college: '', department: '', targetRole: '', skills: [] })
+  const [extras, setExtras] = useState({ companies: [], goal: '' })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [profilePhoto, setProfilePhoto] = useState(() => localStorage.getItem('profilePhoto') || null)
+  const [photo, setPhoto] = useState(() => localStorage.getItem('profilePhoto') || null)
 
   useEffect(() => {
     if (user) {
@@ -23,18 +39,19 @@ export default function ProfilePage() {
         skills: user.skills ?? [],
       })
     }
+    setExtras((e) => ({ ...loadExtras(), ...e }))
   }, [user])
 
-  const handle = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const handle = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
   const saveProfile = async (e) => {
     e.preventDefault()
-    setError(''); setSuccess('')
-    setSaving(true)
+    setError(''); setSuccess(''); setSaving(true)
     try {
       await updateProfile(form)
       await refreshUser()
-      setSuccess('Profile updated successfully!')
+      localStorage.setItem(EXTRAS_KEY, JSON.stringify(extras))
+      setSuccess('Profile updated successfully.')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -43,246 +60,185 @@ export default function ProfilePage() {
   }
 
   const handlePhotoChange = (e) => {
-    const file = e.target.files[0]
+    const file = e.target.files?.[0]
     if (!file) return
+    if (!file.type.startsWith('image/')) return setError('Please choose an image file.')
     const reader = new FileReader()
     reader.onload = (ev) => {
-      setProfilePhoto(ev.target.result)
+      setPhoto(ev.target.result)
       localStorage.setItem('profilePhoto', ev.target.result)
-      setSuccess('Profile photo updated!')
+      setSuccess('Profile photo updated.')
     }
     reader.readAsDataURL(file)
   }
 
-  const handleResumeUpload = async (e) => {    const file = e.target.files[0]
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files?.[0]
     if (!file) return
-    setError(''); setSuccess('')
-    setUploading(true)
+    if (file.size > 10 * 1024 * 1024) return setError('Resume must be under 10 MB.')
+    setError(''); setSuccess(''); setUploading(true)
     try {
       await uploadResume(file)
       await refreshUser()
-      setSuccess('Resume uploaded!')
+      setSuccess('Resume uploaded and ready for analysis.')
     } catch (err) {
       setError(err.message)
     } finally {
       setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
+  const initials = (user?.name ?? 'U').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
   const score = user?.placementReadinessScore ?? 0
-  const scoreColor = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444'
-  const initials = (user?.name ?? 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-  const circumference = 2 * Math.PI * 32
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+    <div className="anim-slide-up flex-col" style={{ gap: '1.25rem' }}>
+      <PageHeader icon="user" title="My Profile" subtitle="Your identity, skills, goals and resume — everything recruiters ask about." />
 
-      {/* ── Hero banner ─────────────────────────────────────────────────── */}
-      <div style={{
-        background: 'linear-gradient(135deg, #060e1c 0%, #091525 60%, #050c18 100%)',
-        border: '1px solid rgba(0,212,255,0.18)',
-        borderRadius: 'var(--radius)',
-        padding: '2rem 2.5rem',
-        display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap',
-        boxShadow: '0 0 40px rgba(0,212,255,0.07)',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        <div style={{
-          position: 'absolute', top: -20, right: -20,
-          width: 200, height: 200, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-
-        {/* Avatar with photo upload */}
-        <div style={{
-          position: 'relative', width: 88, height: 88, flexShrink: 0,
-        }}>
-          <div style={{
-            width: 88, height: 88, borderRadius: '50%',
-            background: profilePhoto
-              ? 'transparent'
-              : 'linear-gradient(135deg, rgba(0,212,255,0.25), rgba(14,165,233,0.15))',
-            border: '2px solid rgba(0,212,255,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 24px rgba(0,212,255,0.25)',
-            overflow: 'hidden',
-          }}>
-            {profilePhoto
-              ? <img src={profilePhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>{initials}</span>
-            }
-          </div>
-          {/* Camera icon overlay */}
-          <label style={{
-            position: 'absolute', bottom: 0, right: 0,
-            width: 26, height: 26, borderRadius: '50%',
-            background: 'var(--primary)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.75rem', border: '2px solid var(--bg-card)',
-            boxShadow: '0 0 8px rgba(0,212,255,0.5)',
-          }} title="Upload photo">
+      {/* ── Banner ─────────────────────────────────────────────────────── */}
+      <section className="profile-banner" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative' }}>
+          {photo ? (
+            <img src={photo} alt="Your profile" className="profile-avatar" />
+          ) : (
+            <div className="profile-avatar">{initials}</div>
+          )}
+          <label
+            title="Upload photo"
+            style={{
+              position: 'absolute', bottom: -4, right: -4, width: 28, height: 28,
+              borderRadius: 99, background: 'var(--primary)', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '2px solid var(--bg-card)', cursor: 'pointer',
+            }}
+            aria-label="Upload profile photo"
+          >
             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
-            📷
+            <Icon name="plus" size={13} strokeWidth={2.5} />
           </label>
         </div>
 
-        <div style={{ flex: 1 }}>
-          <h2 style={{
-            fontSize: '1.5rem', fontWeight: 800,
-            background: 'linear-gradient(135deg, #e2f0ff, #00d4ff)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text', lineHeight: 1.2,
-          }}>
-            {user?.name || 'Your Name'}
-          </h2>
-          <div style={{ marginTop: '0.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            {user?.email}
-          </div>
-          {user?.targetRole && (
-            <div style={{ marginTop: '0.3rem', fontSize: '0.85rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span>🎯</span> {user.targetRole}
-            </div>
-          )}
-          {user?.college && (
-            <div style={{ marginTop: '0.2rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              🏫 {user.college}{user?.department ? ` · ${user.department}` : ''}
-            </div>
-          )}
-        </div>
-
-        <div style={{
-          padding: '0.4rem 1rem', borderRadius: '999px',
-          background: `${scoreColor}18`, border: `1px solid ${scoreColor}40`,
-          color: scoreColor, fontWeight: 700, fontSize: '0.85rem', flexShrink: 0,
-        }}>
-          {score}% Ready
-        </div>
-      </div>
-
-      {/* ── Stats row ───────────────────────────────────────────────────── */}
-      <div className="grid-3">
-        <div className="stat-card" style={{ alignItems: 'center', flexDirection: 'row', gap: '1rem' }}>
-          <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
-            <svg width="72" height="72" viewBox="0 0 72 72">
-              <circle cx="36" cy="36" r="32" fill="none" stroke="#0d1b2e" strokeWidth="6" />
-              <circle cx="36" cy="36" r="32" fill="none" stroke={scoreColor} strokeWidth="6"
-                strokeDasharray={`${circumference * score / 100} ${circumference * (1 - score / 100)}`}
-                strokeDashoffset={circumference * 0.25} strokeLinecap="round"
-                style={{ filter: `drop-shadow(0 0 4px ${scoreColor}80)` }} />
-            </svg>
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontWeight: 800, fontSize: '0.95rem', color: scoreColor }}>{score}</span>
-            </div>
-          </div>
-          <div>
-            <div className="stat-value" style={{ fontSize: '1.1rem' }}>Readiness</div>
-            <div className="stat-label">Placement Score</div>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.02em' }}>{user?.name}</h2>
+          <p className="small" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+          <div className="chip-row" style={{ marginTop: 10 }}>
+            {user?.targetRole && <span className="badge badge-primary"><Icon name="target" size={11} /> {user.targetRole}</span>}
+            {user?.college && <span className="badge badge-neutral"><Icon name="graduation" size={11} /> {user.college}{user?.department ? ` · ${user.department}` : ''}</span>}
+            {form.skills.slice(0, 4).map((s) => <span key={s} className="badge badge-outline">{s}</span>)}
+            {form.skills.length > 4 && <span className="badge badge-neutral">+{form.skills.length - 4} more</span>}
           </div>
         </div>
 
-        <div className="stat-card" style={{ alignItems: 'center', flexDirection: 'row', gap: '1rem' }}>
-          <div className="hex-badge" style={{ fontSize: '1.4rem' }}>🛠️</div>
-          <div>
-            <div className="stat-value">{form.skills.length}</div>
-            <div className="stat-label">Skills Added</div>
-          </div>
-        </div>
-
-        <div className="stat-card" style={{ alignItems: 'center', flexDirection: 'row', gap: '1rem' }}>
-          <div className="hex-badge" style={{ fontSize: '1.4rem' }}>{user?.resumeFileName ? '✅' : '📄'}</div>
-          <div>
-            <div className="stat-value" style={{
-              fontSize: '1rem',
-              background: user?.resumeFileName ? 'linear-gradient(135deg, #e2f0ff, #10b981)' : 'linear-gradient(135deg, #e2f0ff, var(--primary))',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>
-              {user?.resumeFileName ? 'Uploaded' : 'Not yet'}
-            </div>
-            <div className="stat-label">Resume</div>
-          </div>
-        </div>
-      </div>
+        <ScoreRing score={score} size={96} stroke={9} label="/ 100 readiness" />
+      </section>
 
       <ErrorAlert message={error} onDismiss={() => setError('')} />
-      {success && <div className="alert alert-success">✅ {success}</div>}
+      {success && (
+        <div className="alert alert-success" role="status">
+          <Icon name="check" size={15} />
+          <span style={{ flex: 1 }}>{success}</span>
+          <button className="alert-dismiss" onClick={() => setSuccess('')} aria-label="Dismiss">✕</button>
+        </div>
+      )}
 
-      {/* ── Edit form ───────────────────────────────────────────────────── */}
-      <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)' }} />
-          <span style={{ fontWeight: 700, fontSize: '1rem', color: '#e2f0ff' }}>Personal Details</span>
+      {/* ── Edit form ──────────────────────────────────────────────────── */}
+      <form onSubmit={saveProfile} className="card card-pad flex-col" style={{ gap: '1.25rem' }}>
+        <h3 className="section-title">Personal & Academic Details</h3>
+
+        <div className="grid grid-2">
+          <div className="form-group">
+            <label className="form-label" htmlFor="pf-name">Full name *</label>
+            <input id="pf-name" name="name" required className="form-input" value={form.name} onChange={handle} placeholder="Your full name" />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="pf-role">Target role</label>
+            <input id="pf-role" name="targetRole" className="form-input" value={form.targetRole} onChange={handle} placeholder="e.g. Software Engineer at a product company" />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="pf-college">College / University</label>
+            <input id="pf-college" name="college" className="form-input" value={form.college} onChange={handle} placeholder="Anna University" />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="pf-dept">Department / Branch</label>
+            <input id="pf-dept" name="department" className="form-input" value={form.department} onChange={handle} placeholder="Computer Science & Engineering" />
+          </div>
         </div>
 
-        <form onSubmit={saveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="grid-2">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label">Full Name *</label>
-                <input name="name" required className="form-input" placeholder="Your full name" value={form.name} onChange={handle} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">College</label>
-                <input name="college" className="form-input" placeholder="Anna University" value={form.college} onChange={handle} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Department</label>
-                <input name="department" className="form-input" placeholder="Computer Science" value={form.department} onChange={handle} />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label">Target Role</label>
-                <input name="targetRole" className="form-input" placeholder="e.g. SDE at Google" value={form.targetRole} onChange={handle} />
-              </div>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label">
-                  Skills (press Enter to add)
-                  <span style={{ marginLeft: '0.5rem', fontSize: '0.72rem', color: 'var(--primary)', fontWeight: 600 }}>
-                    {form.skills.length} added
-                  </span>
-                </label>
-                <TagInput value={form.skills} onChange={(skills) => setForm(f => ({ ...f, skills }))} placeholder="Java, React, SQL…" />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-            <button type="submit" className="btn btn-primary" disabled={saving} style={{ minWidth: 140 }}>
-              {saving ? <><span className="spinner" /> Saving…</> : '💾 Save Profile'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* ── Resume upload ────────────────────────────────────────────────── */}
-      <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 8px var(--secondary)' }} />
-          <span style={{ fontWeight: 700, fontSize: '1rem', color: '#e2f0ff' }}>Resume</span>
+        <div className="form-group">
+          <label className="form-label" htmlFor="pf-skills">
+            Skills & programming languages
+            <span className="caption" style={{ marginLeft: 8, fontWeight: 400 }}>(press Enter to add · {form.skills.length} added)</span>
+          </label>
+          <TagInput value={form.skills} onChange={(skills) => setForm((f) => ({ ...f, skills }))} placeholder="Java, Python, SQL, React…" />
         </div>
 
-        {user?.resumeFileName && (
-          <div className="alert alert-success" style={{ marginBottom: '1rem' }}>
-            ✅ Current file: <strong>{user.resumeFileName}</strong>
+        <div className="grid grid-2">
+          <TagExtrasField extras={extras} setExtras={setExtras} />
+          <div className="form-group">
+            <label className="form-label" htmlFor="pf-goal">Learning goal</label>
+            <textarea
+              id="pf-goal"
+              className="form-textarea"
+              style={{ minHeight: 66 }}
+              placeholder="e.g. Solve 150 DSA problems and finish 2 mock interviews per week until placement season."
+              value={extras.goal ?? ''}
+              onChange={(e) => setExtras((x) => ({ ...x, goal: e.target.value }))}
+            />
+            <span className="form-hint">Saved on this device and shown on your dashboard plan.</span>
           </div>
-        )}
+        </div>
 
-        <label className="upload-zone" style={{ display: 'block' }}>
-          <input type="file" accept=".txt,.pdf,.doc,.docx" hidden onChange={handleResumeUpload} disabled={uploading} />
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', padding: '1rem' }}>
-            <span style={{ fontSize: '2.5rem' }}>{uploading ? '⏳' : user?.resumeFileName ? '📋' : '📤'}</span>
-            <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>
-              {uploading ? 'Uploading…' : user?.resumeFileName ? 'Replace resume' : 'Upload Resume'}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '1.1rem' }}>
+          <button type="submit" className="btn btn-primary" disabled={saving} style={{ minWidth: 160 }}>
+            {saving ? (<><span className="spinner" /> Saving…</>) : (<><Icon name="check" size={14} /> Save changes</>)}
+          </button>
+        </div>
+      </form>
+
+      {/* ── Resume ─────────────────────────────────────────────────────── */}
+      <section className="card card-pad">
+        <div className="spread" style={{ marginBottom: '1rem' }}>
+          <h3 className="section-title">Resume</h3>
+          {user?.resumeFileName && (
+            <span className="badge badge-success"><Icon name="check" size={11} /> {user.resumeFileName}</span>
+          )}
+        </div>
+        <label className="upload-zone">
+          <input ref={fileRef} type="file" accept=".txt,.pdf,.doc,.docx" hidden onChange={handleResumeUpload} disabled={uploading} />
+          <div className="flex-col" style={{ alignItems: 'center', gap: '0.6rem' }}>
+            <span style={{ color: 'var(--primary)' }}>
+              <Icon name={uploading ? 'refresh' : 'fileText'} size={26} className={uploading ? 'spinner' : ''} />
             </span>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              PDF, DOCX, TXT — max 10 MB
-            </span>
+            <strong style={{ fontSize: '0.9rem' }}>
+              {uploading ? 'Uploading…' : user?.resumeFileName ? 'Replace resume' : 'Upload your resume'}
+            </strong>
+            <span className="caption">PDF, DOCX or TXT · max 10 MB · powers AI resume analysis</span>
           </div>
         </label>
-      </div>
+        <div className="row" style={{ marginTop: '0.9rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <span className="caption">Used by the AI Resume Analyzer to match skills against job requirements.</span>
+          <a href="/resume" onClick={(e) => e.preventDefault()} style={{ display: 'none' }} aria-hidden="true" />
+        </div>
+      </section>
+    </div>
+  )
+}
 
+/* Preferred-companies TagInput wrapper */
+function TagExtrasField({ extras, setExtras }) {
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor="pf-companies">
+        Preferred companies
+        <span className="caption" style={{ marginLeft: 8, fontWeight: 400 }}>(press Enter to add)</span>
+      </label>
+      <TagInput
+        value={extras.companies ?? []}
+        onChange={(companies) => setExtras((x) => ({ ...x, companies }))}
+        placeholder="TCS, Infosys, Google…"
+      />
+      <span className="form-hint">Helps tailor interview practice to company patterns.</span>
     </div>
   )
 }
