@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
         setToken(null)
       })
       .finally(() => setLoading(false))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Auth actions ──────────────────────────────────────────────────────────
   const login = useCallback(async (email, password) => {
