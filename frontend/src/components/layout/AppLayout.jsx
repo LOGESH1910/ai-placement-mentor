@@ -1,80 +1,53 @@
-import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import Sidebar from './Sidebar'
-import Topbar from './Topbar'
+import { useEffect } from 'react'
+import TopNav from './TopNav'
 
-const ROUTE_META = {
-  '/dashboard':           { title: 'Dashboard',        sub: 'Your placement command center' },
-  '/profile':             { title: 'Profile',           sub: 'Manage your placement profile' },
-  '/resume':              { title: 'Resume Analyzer',   sub: 'AI-powered resume analysis & ATS scoring' },
-  '/interview/questions': { title: 'Interview Q&A',     sub: 'Generate & practice technical questions' },
-  '/interview/mock':      { title: 'Mock Interview',    sub: 'Simulate real interviews with AI scoring' },
-  '/coding':              { title: 'Coding Practice',   sub: 'DSA problems with AI guidance' },
-  '/roadmap':             { title: 'Career Roadmap',    sub: 'Your personalised placement journey' },
-  '/communication':       { title: 'Communication',     sub: 'Sharpen verbal & soft skills' },
-  '/aptitude':            { title: 'Aptitude',          sub: 'Quantitative, logical & verbal reasoning' },
+const PAGE_TITLES = {
+  '/dashboard': 'Dashboard',
+  '/learn': 'Learn',
+  '/practice': 'Practice',
+  '/ai-mentor': 'AI Mentor',
+  '/interview': 'Interview Preparation',
+  '/progress': 'Progress',
+  '/profile': 'Profile',
+  '/resume': 'Resume Analysis',
+  '/roadmap': 'Career Roadmap',
 }
 
 export default function AppLayout() {
   const { pathname } = useLocation()
-  const meta = ROUTE_META[pathname] ?? { title: 'AI Placement Mentor', sub: '' }
 
-  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-
-  /* collapse sidebar automatically on small screens */
+  /* Scroll to top + update document title on navigation */
   useEffect(() => {
-    const handler = () => {
-      if (window.innerWidth < 1024) setCollapsed(true)
-      if (window.innerWidth >= 1024) setMobileOpen(false)
-    }
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
-
-  /* close mobile drawer on route change */
-  useEffect(() => { setMobileOpen(false) }, [pathname])
-
-  const marginLeft = isMobile
-    ? 0
-    : collapsed
-    ? 'var(--sidebar-w-col)'
-    : 'var(--sidebar-w)'
+    window.scrollTo({ top: 0 })
+    const base = '/' + (pathname.split('/')[1] ?? '')
+    document.title = `${PAGE_TITLES[base] ?? 'AI Placement Mentor'} · AI Placement Mentor`
+  }, [pathname])
 
   return (
     <div className="app-shell">
-      {/* Mobile backdrop */}
-      {mobileOpen && (
-        <div
-          onClick={() => setMobileOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 90, backdropFilter: 'blur(2px)' }}
-          aria-hidden="true"
-        />
-      )}
-
-      <Sidebar
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-      />
-
-      <div
-        className="app-main"
-        style={{ marginLeft, transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)' }}
+      <a
+        href="#main-content"
+        className="btn btn-secondary btn-sm"
+        style={{ position: 'absolute', left: -9999, top: 8, zIndex: 200 }}
+        onFocus={(e) => { e.currentTarget.style.left = '8px' }}
+        onBlur={(e) => { e.currentTarget.style.left = '-9999px' }}
       >
-        <Topbar
-          title={meta.title}
-          subtitle={meta.sub}
-          onMenuClick={() => setMobileOpen(o => !o)}
-        />
-        <main style={{ flex: 1 }}>
+        Skip to content
+      </a>
+      <TopNav />
+      <main className="app-main" id="main-content">
+        {/* AI Mentor manages its own full-height layout */}
+        {pathname.startsWith('/ai-mentor') ? (
+          <div className="page-content" style={{ maxWidth: 1360 }}>
+            <Outlet />
+          </div>
+        ) : (
           <div className="page-content">
             <Outlet />
           </div>
-        </main>
-      </div>
+        )}
+      </main>
     </div>
   )
 }
