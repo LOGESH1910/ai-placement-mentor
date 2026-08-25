@@ -197,7 +197,7 @@ export default function CodingPage() {
                         padding: '0.25rem 0.65rem', borderRadius: 999, fontSize: '0.8rem',
                         background: topic === t ? 'rgba(99,102,241,0.2)' : 'var(--bg-card2)',
                         border: `1px solid ${topic === t ? 'var(--primary)' : 'var(--border)'}`,
-                        color: topic === t ? '#a5b4fc' : 'var(--text-muted)',
+                        color: topic === t ? 'var(--primary)' : 'var(--text-muted)',
                         cursor: 'pointer', transition: 'var(--transition)',
                       }}>
                       {t}
