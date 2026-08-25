@@ -29,9 +29,15 @@ public class GeminiService {
     private final String baseUrl;
     private final String model;
     private final int maxRetries;
+    private final boolean keyConfigured;
 
     // Back-off delays in ms: 5s, 10s, 20s
     private static final long[] BACKOFF_MS = {5_000, 10_000, 20_000};
+
+    private static final String GROQ_DEFAULT_URL =
+            "https://api.groq.com/openai/v1/chat/completions";
+    private static final String GEMINI_OPENAI_COMPAT_URL =
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
     public GeminiService(
             @Value("${app.gemini.api-key}") String apiKey,
@@ -40,14 +46,51 @@ public class GeminiService {
             @Value("${app.gemini.max-retries:3}") int maxRetries,
             @Value("${app.gemini.timeout:30}") int timeoutSeconds) {
 
-        this.apiKey     = apiKey;
-        this.baseUrl    = baseUrl;
-        this.model      = model;
+        String trimmedKey = apiKey == null ? "" : apiKey.trim();
+        this.keyConfigured = isRealKey(trimmedKey);
+
+        // Auto-select provider endpoint based on the key format:
+        //   gsk_…  → Groq (default)
+        //   AIza…  → Google Gemini (OpenAI-compatible endpoint)
+        // Custom base-url/model overrides still win when the key matches the
+        // provider the configuration was written for.
+        String effectiveUrl = baseUrl;
+        String effectiveModel = model;
+
+        if (trimmedKey.startsWith("AIza") && GROQ_DEFAULT_URL.equals(baseUrl)) {
+            effectiveUrl = GEMINI_OPENAI_COMPAT_URL;
+            if ("llama-3.3-70b-versatile".equals(model)) {
+                effectiveModel = "gemini-2.0-flash";
+            }
+        }
+
+        this.apiKey     = trimmedKey;
+        this.baseUrl    = effectiveUrl;
+        this.model      = effectiveModel;
         this.maxRetries = maxRetries;
         this.objectMapper = new ObjectMapper();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
+
+        if (!keyConfigured) {
+            log.warn("=====================================================================");
+            log.warn("AI API KEY NOT CONFIGURED — AI features will return an error.");
+            log.warn("Set GROQ_API_KEY (free key: https://console.groq.com) or GEMINI_API_KEY");
+            log.warn("(free key: https://aistudio.google.com/apikey) in backend/.env");
+            log.warn("=====================================================================");
+        } else {
+            log.info("AI provider ready — endpoint: {}, model: {}", effectiveUrl, effectiveModel);
+        }
+    }
+
+    /** Detects placeholder or empty keys so we fail fast with a helpful message. */
+    private static boolean isRealKey(String key) {
+        if (key == null || key.isBlank()) return false;
+        String lower = key.toLowerCase();
+        return !lower.startsWith("your-")          // your-gemini-api-key etc.
+                && !lower.contains("placeholder")
+                && !lower.equals("changeme");
     }
 
     // ── JSON-mode call (for all AI features) ─────────────────────────────────
@@ -95,6 +138,12 @@ public class GeminiService {
     // ── Core HTTP call with retry ─────────────────────────────────────────────
 
     private String callWithRetry(Map<String, Object> requestBody) {
+        if (!keyConfigured) {
+            throw new GeminiException(
+                    "AI service is not configured. Add a valid GROQ_API_KEY or GEMINI_API_KEY "
+                    + "to backend/.env and restart the server.");
+        }
+
         int attempt = 0;
         while (true) {
             try {
