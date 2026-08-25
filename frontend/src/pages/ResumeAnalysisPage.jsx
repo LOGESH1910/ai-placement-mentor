@@ -31,7 +31,7 @@ function AnalysisResult({ data }) {
       }}>
         <div style={{ position: 'relative', width: 88, height: 88, flexShrink: 0 }}>
           <svg width="88" height="88" viewBox="0 0 88 88">
-            <circle cx="44" cy="44" r="36" fill="none" stroke="#0d1b2e" strokeWidth="7" />
+            <circle cx="44" cy="44" r="36" fill="none" stroke="var(--bg-subtle)" strokeWidth="7" />
             <circle cx="44" cy="44" r="36" fill="none" stroke={scoreColor} strokeWidth="7"
               strokeDasharray={`${circumference * score / 100} ${circumference * (1 - score / 100)}`}
               strokeDashoffset={circumference * 0.25} strokeLinecap="round"
@@ -43,11 +43,11 @@ function AnalysisResult({ data }) {
         </div>
 
         <div style={{ flex: 1, minWidth: 160 }}>
-          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#e2f0ff', marginBottom: '0.2rem' }}>Profile Strength Score</div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Profile Strength Score</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.6rem' }}>
             Based on {totalItems} analysis points across {SECTIONS.length} categories
           </div>
-          <div className="progress-bar" style={{ height: 4 }}>
+          <div className="progress-track" style={{ height: 5  }}>
             <div className="progress-fill" style={{ width: `${score}%` }} />
           </div>
         </div>
@@ -164,8 +164,8 @@ export default function ResumeAnalysisPage() {
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: '#e2f0ff' }}>Analyze Your Profile</span>
-              <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-muted)', background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.15)', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
+              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Analyze Your Profile</span>
+              <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--primary-muted)', border: '1px solid var(--primary-border)', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
                 AI-Powered
               </span>
             </div>
