@@ -2,6 +2,7 @@ package com.aimentor.exception;
 
 import com.aimentor.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -50,6 +51,13 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DataAccessResourceFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDatabaseUnavailable(DataAccessResourceFailureException ex) {
+        log.error("Database unavailable: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("The database is temporarily unavailable. Please try again shortly."));
     }
 
     @ExceptionHandler(Exception.class)
