@@ -1,0 +1,16 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/ai_placement_mentor_test
+
+app:
+  jwt:
+    secret: test-secret-key-for-unit-tests-minimum-32-chars-ok
+    expiration: 3600000
+  gemini:
+    api-key: test-key
+    base-url: http://localhost:8888/mock-gemini
+    max-retries: 1
+    timeout: 5
+  cors:
+    allowed-origins: http://localhost:5173
